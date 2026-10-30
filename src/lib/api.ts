@@ -108,9 +108,9 @@ export const api = {
   deleteMedia: (id: string) => request(`/api/media/${id}`, { method: 'DELETE' }),
   uploadSingle: (form: FormData) => requestForm<{ media: MediaItem }>('/api/media', form, 'POST'),
   uploadMass: (form: FormData) =>
-    requestForm<{ uploaded: number; media: MediaItem[]; freeUsed: number; paidUsed: number; credits: number; message: string }>('/api/media/upload', form, 'POST'),
+    requestForm<{ uploaded: number; media: MediaItem[]; freeUsed: number; paidUsed: number; credits: number; message: string }>('/api/upload-media', form, 'POST'),
   uploadBudget: (categoryId: string) =>
-    request<{ freeRemaining: number; creditsAvailable: number; freeLimitPerCategory: number; pricePerImage: number }>(`/api/media/upload?categoryId=${categoryId}`),
+    request<{ freeRemaining: number; creditsAvailable: number; freeLimitPerCategory: number; pricePerImage: number }>(`/api/upload-media?categoryId=${categoryId}`),
 
   // search
   search: (q: string, type?: string, page = 1) => {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import { slugify, uniqueSlug, getMediaType, FREE_LIMIT_PER_CATEGORY, PRICE_PER_IMAGE } from '@/lib/helpers'
-import { saveFile, computeUploadBudget } from '../route'
+import { saveFile, computeUploadBudget } from '@/lib/media-helpers'
 
 // POST: subida masiva de archivos
 export async function POST(req: NextRequest) {
