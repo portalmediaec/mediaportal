@@ -124,6 +124,13 @@ export const api = {
   purchaseCredits: (imagesCount: number) =>
     request<{ payment: Record<string, unknown>; credits: number }>('/api/payments', { method: 'POST', body: JSON.stringify({ imagesCount }) }),
 
+  // paypal
+  paypalConfig: () => request<{ enabled: boolean; clientId: string }>('/api/paypal/config'),
+  paypalCreateOrder: (imagesCount: number) =>
+    request<{ orderID: string; status: string; amount: number; imagesCount: number }>('/api/paypal/create-order', { method: 'POST', body: JSON.stringify({ imagesCount }) }),
+  paypalCaptureOrder: (orderID: string) =>
+    request<{ ok: boolean; payment: Record<string, unknown>; credits: number; imagesCount: number; alreadyProcessed?: boolean }>('/api/paypal/capture-order', { method: 'POST', body: JSON.stringify({ orderID }) }),
+
   // my (usuario actual)
   myStats: () =>
     request<{ stats: Record<string, number>; recentMedia: MediaItem[]; usageByCategory: Array<Record<string, unknown>>; payments: Array<Record<string, unknown>>; pricePerImage: number; freeLimitPerCategory: number }>('/api/my/stats'),
