@@ -1,0 +1,88 @@
+// Prisma schema - Portal multimedia de directorio de negocios con imágenes
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         String   @default("USER") // ADMIN | USER
+  credits      Int      @default(0) // imágenes prepagadas a $0.10 c/u
+  company      String?
+  website      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  media    Media[]
+  payments Payment[]
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  icon        String?
+  color       String?
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryTree")
+  subcatMedia Media[]    @relation("SubcategoryMedia")
+  createdAt   DateTime   @default(now())
+
+  media Media[]
+}
+
+model Media {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  description   String?
+  url           String
+  thumbnailUrl  String?
+  type          String   @default("IMAGE") // IMAGE | GIF | VIDEO
+  externalLink  String?
+  altText       String?
+  seoTitle      String?
+  seoDescription String?
+  seoKeywords   String?
+  tags          String?
+  status        String   @default("APPROVED") // PENDING | APPROVED | REJECTED
+  views         Int      @default(0)
+  categoryId    String
+  subcategoryId String?
+  userId        String
+  width         Int?
+  height        Int?
+  size          Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategory Category? @relation("SubcategoryMedia", fields: [subcategoryId], references: [id], onDelete: SetNull)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Payment {
+  id           String   @id @default(cuid())
+  userId       String
+  amount       Float // valor en dólares
+  imagesCount  Int // cantidad de imágenes compradas
+  status       String   @default("PAID") // PENDING | PAID | FAILED
+  method       String   @default("SIMULATED")
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
