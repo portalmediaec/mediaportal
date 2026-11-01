@@ -1,8 +1,22 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 
+// ─── Inicialización temprana de variables ───
+// Prisma requiere DATABASE_URL en el schema, pero en producción usamos Turso.
+// Si DATABASE_URL no está definida, la derivamos de las variables de Turso
+// para que Prisma pueda inicializarse (aunque luego usemos el adapter).
+if (!process.env.DATABASE_URL) {
+  const tursoUrl = process.env.TURSO_DATABASE_URL
+  const tursoToken = process.env.TURSO_AUTH_TOKEN
+  if (tursoUrl && tursoToken) {
+    process.env.DATABASE_URL = `${tursoUrl}?authToken=${tursoToken}`
+  } else {
+    // Fallback para desarrollo local sin Turso
+    process.env.DATABASE_URL = 'file:./db/local.db'
+  }
+}
+
 // Detecta si estamos en Turso/libSQL (production) o SQLite local (development)
-// Turso se activa cuando TURSO_DATABASE_URL y TURSO_AUTH_TOKEN están definidos
 function createPrismaClient() {
   const tursoUrl = process.env.TURSO_DATABASE_URL
   const tursoToken = process.env.TURSO_AUTH_TOKEN
@@ -13,10 +27,7 @@ function createPrismaClient() {
     return new PrismaClient({ adapter })
   }
 
-  // Desarrollo local: SQLite (aseguramos que DATABASE_URL tenga un valor)
-  if (!process.env.DATABASE_URL) {
-    process.env.DATABASE_URL = 'file:./db/local.db'
-  }
+  // Desarrollo local: SQLite
   return new PrismaClient({
     log: process.env.NODE_ENV !== 'production' ? ['warn', 'error'] : ['error'],
   })
