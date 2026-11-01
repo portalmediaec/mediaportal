@@ -5,39 +5,44 @@ import { slugify, uniqueSlug } from '@/lib/helpers'
 
 // Lista pública de categorías (con conteo de media aprobado)
 export async function GET(req: NextRequest) {
-  const search = req.nextUrl.searchParams.get('search') || ''
-  const parents = await db.category.findMany({
-    where: {
-      parentId: null,
-      ...(search ? { name: { contains: search } } : {}),
-    },
-    orderBy: { name: 'asc' },
-  })
+  try {
+    const search = req.nextUrl.searchParams.get('search') || ''
+    const parents = await db.category.findMany({
+      where: {
+        parentId: null,
+        ...(search ? { name: { contains: search } } : {}),
+      },
+      orderBy: { name: 'asc' },
+    })
 
-  const children = await db.category.findMany({
-    where: { parentId: { not: null } },
-    orderBy: { name: 'asc' },
-  })
+    const children = await db.category.findMany({
+      where: { parentId: { not: null } },
+      orderBy: { name: 'asc' },
+    })
 
-  // Conteos
-  const allCats = [...parents, ...children]
-  const counts = await Promise.all(
-    allCats.map((c) => db.media.count({ where: { categoryId: c.id, status: 'APPROVED' } }))
-  )
-  const countMap = new Map<string, number>()
-  allCats.forEach((c, i) => countMap.set(c.id, counts[i]))
+    // Conteos
+    const allCats = [...parents, ...children]
+    const counts = await Promise.all(
+      allCats.map((c) => db.media.count({ where: { categoryId: c.id, status: 'APPROVED' } }))
+    )
+    const countMap = new Map<string, number>()
+    allCats.forEach((c, i) => countMap.set(c.id, counts[i]))
 
-  const build = (list: typeof parents, pid: string | null) =>
-    list
-      .filter((c) => c.parentId === pid)
-      .map((c) => ({
-        ...c,
-        mediaCount: countMap.get(c.id) || 0,
-        children: build(children as typeof parents, c.id),
-      }))
+    const build = (list: typeof parents, pid: string | null) =>
+      list
+        .filter((c) => c.parentId === pid)
+        .map((c) => ({
+          ...c,
+          mediaCount: countMap.get(c.id) || 0,
+          children: build(children as typeof parents, c.id),
+        }))
 
-  const tree = build(parents, null)
-  return NextResponse.json({ categories: tree })
+    const tree = build(parents, null)
+    return NextResponse.json({ categories: tree })
+  } catch (e) {
+    const err = e as Error
+    return NextResponse.json({ error: 'DB_ERROR', message: err.message, stack: err.stack?.slice(0, 500) }, { status: 500 })
+  }
 }
 
 // Crear categoría (solo admin)
