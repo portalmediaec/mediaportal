@@ -1,10 +1,13 @@
 // Prisma schema - Portal multimedia de directorio de negocios con imágenes
+// Soporta SQLite local (desarrollo) y Turso/libSQL (producción en Vercel)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
+  // En producción (Vercel) usamos el adapter de Turso, no esta URL.
+  // El valor solo se usa para migraciones locales.
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
